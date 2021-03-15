@@ -1,14 +1,23 @@
 package au.com.system.controller;
 
-import au.com.system.model.Hotel;
-import au.com.system.model.Room;
+import au.com.system.config.JwtTokenUtil;
+import au.com.system.model.*;
 import au.com.system.service.HotelService;
+import au.com.system.service.MyUserDetailsService;
+import au.com.system.util.JwtUtil;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +28,43 @@ public class HotelController {
     @Autowired
     private HotelService hotelservice;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    MyUserDetailsService userDetailsService;
+
+    @Autowired
+    JwtUtil jwtUtil;
+
+
     @GetMapping("/hotels")
+    @HystrixCommand(fallbackMethod = "fallbackgetHotelList")
     public ResponseEntity<List<Hotel>> getHotelList() {
         List<Hotel> hotelList = hotelservice.getHotelList();
+        return ResponseEntity.ok(hotelList);
+    }
+
+    @PostMapping("/authenticate")
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception{
+       try {
+           authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(),
+                   authenticationRequest.getPassword()));
+       }catch(BadCredentialsException e){
+            throw new Exception("Incorrect username or password" , e);
+       }
+
+       final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+
+        String token = jwtUtil.generateToken(userDetails);
+        return ResponseEntity.ok(new AuthenticationResponse(token));
+    }
+
+
+    public ResponseEntity<List<Hotel>> fallbackgetHotelList(){
+        Address address = new Address();
+        Room room = new Room();
+        List<Hotel> hotelList = Arrays.asList(new Hotel(101, "raj ratan", "76857484736", address,room));
         return ResponseEntity.ok(hotelList);
     }
 

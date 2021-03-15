@@ -1,11 +1,11 @@
-package au.com.system;
+package com.guest;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
-import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.client.RestTemplate;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
@@ -14,11 +14,10 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @SpringBootApplication
 @EnableSwagger2
 @EnableEurekaClient
-@EnableHystrix
-public class HotelServiceApplication {
+public class GuestServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(HotelServiceApplication.class, args);
+        SpringApplication.run(GuestServiceApplication.class, args);
     }
 
     @Bean
@@ -26,12 +25,7 @@ public class HotelServiceApplication {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
                 .apis(RequestHandlerSelectors
-                        .basePackage("au.com.system"))
+                        .basePackage("com.guest"))
                 .build();
-    }
-
-    @Bean
-    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
     }
 }
